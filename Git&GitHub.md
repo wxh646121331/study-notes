@@ -1,8 +1,8 @@
-# 1 Git命令操作
 
-## 1.1 本地库操作
 
-### 1.1.1 本地库初始化
+# 1 本地库操作
+
+## 1.1 本地库初始化
 
 - 命令：git init
 
@@ -12,7 +12,7 @@
 
 - 注意：.git目录中存放的是本地库相关的子目录和文件，不要删除，也不要胡乱修改
 
-### 1.1.2 设置签名
+## 1.2 设置签名
 
 - 形式
   - 用户名：wxh
@@ -30,14 +30,14 @@
     - 信息保存路径：~/.gitconfig
   - 优先级：优先使用项目级别
 
-### 1.1.2 基本操作
+## 1.3 基本操作
 
 - 查询工作区、暂存区状态：git status
 - 将工作区新建/修改的文件添加到暂存区：git add [filename]
 - 从暂存区删掉：git rm -- cached [filename]
 - 将暂存区的内容提交到本地库：git commit -m "commit msg" [filename]
 
-### 1.1.3 查看提交记录
+## 1.4 查看提交记录
 
 - git log
 - git log -\-pretty=oneline
@@ -45,7 +45,7 @@
 - git reflog
   - HEAD@{移动到当前版本需要多少步}
 
-### 1.1.4 版本回退
+## 1.5 版本回退
 
 - git reset -\- hard [哈希值]
 
@@ -69,7 +69,7 @@
   - 只能后退
   - 默认后退一个版本，~后加n表示后退n个版本
 
-### 1.1.5 比较文件
+## 1.6 比较文件
 
 - git diff [文件名]
   - 工作区与暂存区文件进行比较
@@ -81,7 +81,7 @@
     - git diff HEAD^ [文件名]
     - git diff [版本哈希值] [文件名]
 
-### 1.1.5 分支管理
+## 1.7 分支管理
 
 - git branch -v
   - 查看所有分支
@@ -92,7 +92,7 @@
 - git merge [有新内容的分支]
   - 分支合并
 
-### 1.1.6 解决冲突
+## 1.8 解决冲突
 
 - 冲突的表现
 
@@ -108,35 +108,51 @@
   - "======="到"》">>>>>>>"之间为另一分支内容
 
 - 冲突的解决
-
   1. 编辑文件，删除特殊符号
   2. 把文件修改到满意的程度，保存退出
   3. git add [文件名]
   4. git commit -m "日志信息"(注意：此时commit一定不能带具体文件名)
 
-  
+# 2 远程库操作
 
-  
+## 2.1 新建别名
 
-  
+~~~
+git remote add origin https://github.com/wxh646121331/study-notes.git
+~~~
 
-## 1.2 远程库操作
+## 2.2 查看远程库操作
 
-- 新建别名
+~~~
+taohewudeMacBook-Pro:study-notes taohewu$ git remote -v
+origin	https://github.com/wxh646121331/study-notes.git (fetch)
+origin	https://github.com/wxh646121331/study-notes.git (push)
+~~~
 
-  ~~~
-  git remote add origin https://github.com/wxh646121331/study-notes.git
-  ~~~
+## 2.3 push操作
 
-- 查看远程库操作
+~~~
+git push origin master 
+~~~
 
-  ~~~
-  taohewudeMacBook-Pro:study-notes taohewu$ git remote -v
-  origin	https://github.com/wxh646121331/study-notes.git (fetch)
-  origin	https://github.com/wxh646121331/study-notes.git (push)
-  ~~~
+## 2.4 克隆操作
 
-  
+~~~
+git clone https://github.com/wxh646121331/test.git
+~~~
+
+## 2.5 抓取操作
+
+~~~
+git fetch origin master
+~~~
+
+- 注意：fetch操作只将origin下载到本地，并不会修改工作区，需要将origin合并到工作区
+
+- 拉取
+  - pull=fetch+merge
+  - git fetch [远程库地址别名\] [远程分支名] 
+  - git merge [远程库地址别名] [远程分支名\]
 
 # 2 Git基本原理
 
@@ -158,6 +174,20 @@
 ### 2.2.2 Git的文件管理机制
 
 ​	Git把数据看作是小型文件系统的一组快照
+
+# 3 SSH登录
+
+- 生成.ssh密钥目录
+
+  ~~~
+  ssh-keygen -t rsa -C wxh646121331@163.com
+  ~~~
+
+- 拷贝.ssh/id_rsa.pub文件内容
+
+- 在GitHub中，进入settings->SSH and GPG keys，粘贴信息
+
+- 创建SSH地址别名
 
 
 
