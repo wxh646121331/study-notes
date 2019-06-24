@@ -183,7 +183,7 @@ git fetch origin master
   ssh-keygen -t rsa -C wxh646121331@163.com
   ~~~
 
-- 拷贝.ssh/id_rsa.pub文件内容
+- 拷贝~/.ssh/id_rsa.pub文件内容
 
 - 在GitHub中，进入settings->SSH and GPG keys，粘贴信息
 
