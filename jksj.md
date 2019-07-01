@@ -106,3 +106,19 @@
     - 执行器将上述遍历过程中所有满足条件的行组成的记录集任务结果集返回给客户端。
   - 数据库的慢查询日志中有一个rows_examined字段，表示这个语句执行过程中扫描了多少行，这个值就是在执行器每次调用引擎获取数据行的时候累加的
   - 有些场景下，执行器调用一次，在引擎内部则扫描了多行，因此引擎扫描行跟跟rows_examined并不是完全相同的
+
+## 附录
+
+- 常用命令
+
+  | 命令                              | 说明                                                         |
+  | --------------------------------- | ------------------------------------------------------------ |
+  | mysql -h\$ip -P\$port -u\$user -p | 连接数据库                                                   |
+  | show processlist;                 | 查看连接状态，等价于select * from information_schema.processlist; |
+  | show databases;                   | 查询所有schema                                               |
+  | use database_name;                | 切换scheme                                                   |
+  | use tables;                       | 查询当前数据库下所有的表                                     |
+  | desc table_name;                  | 查看表结构                                                   |
+
+  
+

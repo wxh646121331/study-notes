@@ -84,7 +84,9 @@
 ## 1.7 分支管理
 
 - git branch -v
-  - git branch 不带参数：列出本地已经存在的分支，
+  - git branch 不带参数：列出本地已经存在的分支
+  - git branch -r 列出远程分支
+  - git branch -a 列出本地分支和远程分支
   - 查看所有分支
 - git branch [分支名]
   - 新建分支
@@ -154,6 +156,17 @@ git fetch origin master
   - pull=fetch+merge
   - git fetch [远程库地址别名\] [远程分支名] 
   - git merge [远程库地址别名] [远程分支名\]
+
+## 2.6 创建远程分支
+
+```
+git checkout -b my-test  //在当前分支下创建my-test的本地分支分支
+git push origin my-test  //将my-test分支推送到远程
+git branch --set-upstream-to=origin/my-test //将本地分支my-test关联到远程分支my-test上   
+git branch -a //查看远程分支 
+```
+
+
 
 # 2 Git基本原理
 
