@@ -12,7 +12,7 @@
 
 - 是什么：https://dev.aliyun.com/search.html
 - 注册阿里云账号
-- 获得加速器地址: https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors
+- 获得加速器地址: https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors 链接中有相关配置说明
 - 重启Docker后台服务：service docker restart
 - 检查加速器是否生效
 

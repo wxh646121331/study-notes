@@ -84,6 +84,7 @@
 ## 1.7 分支管理
 
 - git branch -v
+  - git branch 不带参数：列出本地已经存在的分支，
   - 查看所有分支
 - git branch [分支名]
   - 新建分支
