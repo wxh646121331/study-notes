@@ -313,6 +313,92 @@ update T set c=c+1 where ID=2;
 
   - 答案：重建索引k的做法是合理的，可以达到省空间的目的。但是，重建主键的过程不合理。不论是删除主键还是创建主键，都会将整个表重建。所以连着执行这两个语句的话，第一个语句就白做了。这两个语句，可以用这个语句代替：alter table T engine=InnoDB。
 
+# 5 深入浅出索引（下）
+
+## 5.1 覆盖索引
+
+- 建表语句：
+
+  ~~~mysql
+  mysql> create table T5 (
+  id int primary key,
+  k int NOT NULL DEFAULT 0, 
+  s varchar(16) NOT NULL DEFAULT '',
+  index k(k))
+  engine=InnoDB;
+  
+  insert into T5 values(100,1, 'aa'),(200,2,'bb'),(300,3,'cc'),(500,5,'ee'),(600,6,'ff'),(700,7,'gg');
+  
+  ~~~
+
+- 如下查询语句
+
+  ~~~mysql
+  select * from T5 where k between 3 and 5;
+  ~~~
+
+  的执行流程为：
+
+  1. 在k索引树上找到k=3的记录，取得id=300；
+  2. 再到id索引树想到id=300对应的记录R3； 
+  3. 在k索引树查到下一个值k=5，取得id=500
+  4. 再回到id索引对查到id=500对应 的记录； 
+  5. 在k索引树取下一个值k=6，不满足条件，循环结束。
+
+  在这个过程中，读了k索引树的3条记录，回表了2次
+
+- 覆盖索引
+
+  - 如果执行的语句是
+
+    ~~~mysql
+    select id from T5 where k between 3 and 5;
+    ~~~
+
+    则不需要回表，也就是说，如果索引里覆盖了查询需求，则称为覆盖索引
+
+  - 由于覆盖索引可以减少树的搜索次数，显著提升查询性能，所以使用覆盖索引是一个常用的性能优化手段。
+
+  - 注意：在引擎内部使用覆盖索引在索引k上其实读了3个记录，但是对于MySQL的Server层来说，它就是找引擎拿到了两条记录，因此MySQL认为扫描行数是2。
+
+## 5.2 最左前缀原则
+
+- B+树这种索引结构，可以利用索引的“最左前缀”，来定位记录
+- 建立联合索引的原则：
+  - 如果通过调整顺序，可以少维护一个索引，那么这个顺序往往就是需要优化考虑采用的
+  - 如果不得不维护两个索引，建议创建一个占用空间比较的的单字段索引
+
+## 5.3 索引下推
+
+- MySQL 5.6 引入索引下推优化（index condition pushdown），可以在索引遍历过程中对索引中包含的字段先做判断，直接过滤掉不满足条件的记录，减少回表次数
+
+## 5.4 思考题
+
+- 有这么一个表，表结构定义是这样的：
+
+  ~~~mysql
+  create table geek(a int(11) not null,
+                   b int(11) not null,
+                   c int(11) not null,
+                   d int(11) not null,
+                   primary key (a, b),
+                   key c(c),
+                   key ca(c, a),
+                   key cb(c, b)
+                   )engine=InnoDB;
+  ~~~
+
+  由于历史原因，这个表需要a、b做联合主键，业务里面还有这样的两个语句：
+
+  ~~~mysql
+  select * from geek where c=N order by a limit 1;
+  select * from geek where c=N order by b limit 1;
+  ~~~
+
+  为了这两个查询，ca，cb这两个查询是否都是必要的？
+
+- 答案：cb是必要的，ca不需要，ca索引与c索引记录的数据是一样的
+
 # 附录
 
 ## 常用命令
