@@ -1,4 +1,4 @@
-# 1. MySQL的架构介绍
+# 1 MySQL的架构介绍
 
 ## 1.1 MySQL简介
 
@@ -399,6 +399,113 @@ update T set c=c+1 where ID=2;
 
 - 答案：cb是必要的，ca不需要，ca索引与c索引记录的数据是一样的
 
+# 6 全局锁和表锁：给表加个字段怎么有这么我阻碍？
+
+## 6.1 全局锁
+
+- 全局锁就表对整个数据库实例加锁。加全局锁的命令是
+
+  ~~~mysql
+  flush tables with read lock;
+  ~~~
+
+  - 全局锁的典型使用场景是，做全库逻辑备份
+  - 对整库做备份，FTWRL能确保不会有其他线程对数据库做更新，数据库会完全处理只读状态，存在的风险有：
+    - 如果在评为上备份，那么在备份期间都不能执行更新，业务基本上就得停摆
+    - 如果在从库上备份，那么备份期间从库不能执行主库同步过来的binlog，会导致主从延迟
+  - 全库更新的另一种方法是使用官方自带的逻辑备份工具mysqldump，使用参数-single-transaction，开启可重复读事务
+    - single-transaction方法只适用于所有的表使用事务引擎的库
+  - 全库只读，为什么不使用set global readonly=true的方式呢？
+    - 有些系统中，readonly的值会被用来做其他逻辑，比如用来判断一个库是主库还是备库
+    - 在异常处理机制上，如果执行FTWRL传令之后由于客户端发生异常断开，那么MySQL会自动释放这个全局锁，整个库回到可以正常更新的状态。而将整个库设置成readonly后，如果客户端发生异常，则数据库会一直保持readonly状态，这样会导致整个库上时间处于不可写状态，风险较高
+
+- 业务的更新不只是增删改数据（DML），还有可能是加字段等修改表结构的操作（DDL），不论是哪种方法，一个库被全局锁上以后，你要对里面任务一个表做加字段操作，都是会被锁住的
+
+## 6.2 表级锁
+
+- MySQL里表级别锁有两种：
+
+  - 表锁
+  - 元数据锁（meta data lock, MDL）
+
+- 表锁：
+
+  - 加表锁的语法：lock tables … read/write
+  - 释放锁：unlock tables主动释放或在客户端断开的时候自动释放
+  - lock tables语法除了会限制别的线程的读写外，也限定了本线程接下来的操作对象
+    - 例如：如果线程A中执行了lock tables t1 read, t2 write; 这个语句，则其他线程写t1、读写t2的语句都会被阻塞。同时线程A在执行unlock tables之前，也只能执行读t1、读写t2的操作，不能访问其他表
+
+- 元数据锁（metadata lock, MDL）
+
+  - MDL不需要显示式使用，在访问一个表的时候会被自动加上。
+
+  - MDL的作用是，保证读写的正确性。
+
+  - MySQL 5.5 版本中引入了MDL，当对一个表做增删改查操作的时候，加MDL读锁；当要对表做结构变更操作的时候，加MDL写锁
+
+    - 读锁之间不互斥，可以有多个线程同时对一张表增删改查
+    - 读写锁之间、写锁之间是互斥的，用来保证变更表结构操作的安全性。因此，如果有两个线程要同时给一个表加字段，其中一个要等另一个执行完才能开始执行。
+
+  - 如何安全地给小表加字段？
+
+    - 首先要解决长事务，事务不提交，就会一直占着MDL锁。在MySQL的information_schema库的innodb_tx表中，可以查到当前执行中的事务。如果要做DDL变更的表刚好有长事务在执行，要考虑先暂停DDL，或者kill掉这个长事务
+
+    - 如果要变更的表是一个热点表，比较理想的机制是，在alter table语句里面设定等待时间，如果在这个指定的等待时间里面能够拿到MDL写锁最好，拿不到也不要阻塞后面的业务语句，先放弃，之后再通过重试命令重复这个过程
+
+      ~~~mysql
+      alter table tb_name nowait add column ...
+      alter table tb_name wait n add column ...
+      ~~~
+
+## 6.3 思考题
+
+- 备份一般都会在备库上执行，在用-single-transaction方法做逻辑备份的过程中，如果主库上的一个小表做了一个DDL，比如给一个表上加了一列。这时候，从备库上会看到什么现象呢？
+
+- 答案：
+
+  ~~~
+  Q1:SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+  Q2:START TRANSACTION  WITH CONSISTENT SNAPSHOT；
+  /* other tables */
+  Q3:SAVEPOINT sp;
+  /* 时刻 1 */
+  Q4:show create table `t1`;
+  /* 时刻 2 */
+  Q5:SELECT * FROM `t1`;
+  /* 时刻 3 */
+  Q6:ROLLBACK TO SAVEPOINT sp;
+  /* 时刻 4 */
+  /* other tables */
+  ~~~
+
+  
+
+# 7 行锁功过：怎么减少行锁对性能的影响？
+
+- 行锁是在引擎层由各个引擎自己实现的。并不是所有的引擎都支持行锁，MyISAM引擎就不支持行锁
+
+## 7.1 两阶段锁
+
+- 两阶段锁协议：在InnoDB事务中，行锁是在需要的时候才加上的，但并不是不需要了就立刻释放，而是要等到事务结束时才释放
+- 如果事务中需要锁多个行，要把最可能造成锁冲突、最可以影响并发度的锁尽量往后放
+
+## 7.2 死锁和死锁检测
+
+- 死锁：当并发系统中不同线程出现循环资源依赖，涉及的线程都在等待别的线程释放资源时，就会导致这几个线程都进入无限等待的状态
+- 出现死锁后，有两种策略：
+  - 直接进入等待，直到超时。这个超时时间可以通过参数innodb_lock_wait_timeout来设置
+  - 发起死锁检测，发现死锁后，主动回滚链条中的某一个事务，让其他事务得以继续执行。将参数innodb_deadlock_detect设置成on，表示开启死锁检测。死锁检测会耗费大量的CUP
+
+## 7.3 思考题
+
+- 如果要删除一个表里面的前10000行数据，有以下3种方法可以做到：
+  - 直接执行 delete from T limit 10000;
+  - 在一个连接中循环执行20次delete from T limit 500;
+  - 在20个连接中同时执行delete from T limit 500
+- 答案：第一种方法一次性更新10000条数据，会产生大事务，根据两阶段锁协议，事务提交的时候才会释放锁，导致数据会被长时间锁住。第三种方法可能出现资源抢占，导致死锁。所以选择第二种方法
+
+  
+
 # 附录
 
 ## 常用命令
@@ -412,7 +519,8 @@ update T set c=c+1 where ID=2;
 | use tables;                       | 查询当前数据库下所有的表                                     |
 | desc table_name;                  | 查看表结构                                                   |
 | show variables like '%tx%';       | 查看参数配置                                                 |
-| show full columns from tableN;    | 查看表结构详细                                               |
+| show full columns from tb_nam;    | 查看表结构详细                                               |
+| show create table tb_name;        | 查看建表语句                                                 |
 
 ## 常用参数
 
@@ -420,7 +528,8 @@ update T set c=c+1 where ID=2;
 | ------------------------------ | ------------------------------------------------------------ |
 | innodb_flush_log_at_trx_commit | 设置成 1 的时候表示每次事务的 redo log 都直接持久化到磁盘，建议设置成 1，这样可以保证 MySQL 异常重启之后数据不丢失 |
 | sync_binlog                    | 设置成1表示每次事务的 binlog 都持久化到磁盘，建议设置成 1，可以保证 MySQL 异常重启之后 binlog 不丢失 |
-|                                |                                                              |
+| innodb_lock_wait_timeout       | 锁等待超时时间                                               |
+| innodb_deadlock_detect         | 是否开启主动死锁检测                                         |
 
 ## 常用函数
 

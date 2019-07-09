@@ -166,6 +166,12 @@ git branch --set-upstream-to=origin/my-test //将本地分支my-test关联到远
 git branch -a //查看远程分支 
 ```
 
+## 2.7 将远程git仓库里的指定分支拉取到本地（本地不存在的分支）
+
+~~~
+git checkout -b 本地分支名 origin/远程分支名
+~~~
+
 
 
 # 2 Git基本原理
