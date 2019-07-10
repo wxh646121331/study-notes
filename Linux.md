@@ -186,7 +186,7 @@ Linux系统是一个多用户多任务的分时操作系统
 
 ## 4.1 指定运行级别
 
-![](/Users/taohewu/Documents/mygit/mackdown/images/Linux/Linux系统运行级别.png)
+![](./images/Linux/Linux系统运行级别.png)
 
 - 指定运行级别：init [012356]
 
