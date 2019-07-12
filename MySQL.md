@@ -603,7 +603,41 @@ select id from T where k=5;
 - change buffer 和 redo log
 
   - redo log主要节省的是随机写磁盘的IO消耗（转成顺序写）
-  - change buffer主要节省的是
+  - change buffer主要节省的是随机读磁盘的IO消耗
+
+# 10 MySQL为什么有时候会选错索引？
+
+创建表
+
+~~~mysql
+CREATE TABLE `t` (
+  `id` int(11) NOT NULL,
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `a` (`a`),
+  KEY `b` (`b`)
+) ENGINE=InnoDB
+~~~
+
+存储过程写入数据
+
+~~~mysql
+delimiter ;;
+create procedure idata()
+begin
+  declare i int;
+  set i=1;
+  while(i<=100000)do
+    insert into t values(i, i, i);
+    set i=i+1;
+  end while;
+end;;
+delimiter ;
+call idata();
+~~~
+
+
 
 # 附录
 
@@ -620,6 +654,10 @@ select id from T where k=5;
 | show variables like '%tx%';       | 查看参数配置                                                 |
 | show full columns from tb_nam;    | 查看表结构详细                                               |
 | show create table tb_name;        | 查看建表语句                                                 |
+| select * from mysql.proc limit 1; | 存储过程                                                     |
+| show procedure status;            | 查看存储过程                                                 |
+| show create procedure proc_name;  | 查看存储过程创建代码                                         |
+| show create function func_name;   | 查看函数创建代码                                             |
 
 ## 常用参数
 
