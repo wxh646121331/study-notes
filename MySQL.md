@@ -561,6 +561,50 @@ select id from T where k=5;
 - InnoDB的数据是按数据页为单位来读写的，也就是说，当需要读一条记录的时候，并不是将这个记录本身从磁盘读出来，而是以页为单位，将其整体读入内存，在InnoDB里，每个数据页的大小默认是16KB。
 - 因此，对于查询过程，普通索引和唯一索引的性能差异微乎其微
 
+## 9.2 更新过程
+
+- change buffer
+  
+  - 当需要更新一个数据页时，如果这个数据页已经在内存中，则直接更新。如果这个数据页不在内存中，在不影响数据一致性的前提下，InnoDB会将这些更新操作缓存在change buffer中，这样就不需要从磁盘中读入数据页了。当下次查询需要使用这个数据页的时候，将数据页读入内存，然后执行change buffer中与这个页相关的操作
+  
+- merge
+  
+  - 将change buffer中的操作应用到原数据页，生成最新结果的过程，称作merge
+  - 除了访问这个数据页会触发merge外，系统有后台线程会定期merge。在数据库正常关闭的过程中，也会执行merge操作
+  
+- 使用 change buffer的优点
+
+  - 如果能够将更新操作先记录在change buffer，减少读磁盘，语句的执行速度会得到明显的提升。而且，数据读入内存是需要占用buffer pool的，所有这种方式还能够避免占用内存，提高内存利用率
+
+- 什么条件下可以使用change buffer
+
+  - 更新操作流程：
+
+    ~~~mermaid
+    graph TB
+    start[更新操作]-->isInMemory{是否在内存中}
+    isInMemory--Y-->isUnique{"唯一索引？"}
+    isInMemory--N-->isUnique2{"唯一索引？"}
+    isUnique--Y-->validateUnique[校验唯一性]
+    isUnique--N-->update[更新内存]
+    validateUnique-->update
+    update-->e((结束))
+    isUnique2--Y-->readData[数据页读入内存]
+    readData-->validateUnique
+    isUnique2--N-->writeChangeBuf[写change buffer]
+    writeChangeBuf-->e
+    
+    ~~~
+
+  - change buffer适用于写多读少的场景，比如账单、日志类
+
+  - change buffer不适用于写入之后马上会做查询的场景，对于这种场景，change buffer不但不能减少随机访问IO的次数，反而增加了change buffer的维护代码
+
+- change buffer 和 redo log
+
+  - redo log主要节省的是随机写磁盘的IO消耗（转成顺序写）
+  - change buffer主要节省的是
+
 # 附录
 
 ## 常用命令
@@ -585,6 +629,7 @@ select id from T where k=5;
 | sync_binlog                    | 设置成1表示每次事务的 binlog 都持久化到磁盘，建议设置成 1，可以保证 MySQL 异常重启之后 binlog 不丢失 |
 | innodb_lock_wait_timeout       | 锁等待超时时间                                               |
 | innodb_deadlock_detect         | 是否开启主动死锁检测                                         |
+| innodb_change_buffer_max_size  | change buffer占用buffer pool的百分比                         |
 
 ## 常用函数
 
