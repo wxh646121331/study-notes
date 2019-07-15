@@ -637,7 +637,19 @@ delimiter ;
 call idata();
 ~~~
 
+## 10.1 优化器逻辑
 
+- 优化器会根据几个因素选择索引
+  - 扫描行数
+  - 是否使用临时表
+  - 是否排序
+- 扫描行数的判断
+  - 索引区分度：一个索引上不同的值的个数，基数越大，索引的区分度越好
+  - MySQL使用采样统计得到索引的基数，因而并不准确。采样统计的时候，InnoDB默认会选择N个数据页，统计这个页面上的不同值，得到一个平均值，然后乘以这个索引的页面数据，就得到了个这索引的基数。当变更的数据行数超过1/M的时候，会自动触发重新做一次索引统计
+  - 在MySQL中，有两种存储索引统计的方式，可以通过设置参数innodb_stats_persistent的值来选择
+    - on表示统计信息会持久化存储，默认的N是20，M是10
+    - off表示统计信息只存储在内存中，默认的N是8，M是16
+- 使用analyze table t命令，可以重新统计索引信息
 
 # 附录
 
@@ -668,6 +680,10 @@ call idata();
 | innodb_lock_wait_timeout       | 锁等待超时时间                                               |
 | innodb_deadlock_detect         | 是否开启主动死锁检测                                         |
 | innodb_change_buffer_max_size  | change buffer占用buffer pool的百分比                         |
+| slow_query_log                 | 慢查询日志开关                                               |
+| slow_query_log_file            | 查查询日志存储路径                                           |
+| long_query_time                | 慢查询阈值，默认为10秒                                       |
+| innodb_stats_persistent        | 采样统计存储方式                                             |
 
 ## 常用函数
 
