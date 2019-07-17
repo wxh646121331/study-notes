@@ -651,6 +651,39 @@ call idata();
     - off表示统计信息只存储在内存中，默认的N是8，M是16
 - 使用analyze table t命令，可以重新统计索引信息
 
+
+
+# 11 怎么给字符串加索引？
+
+## 11.1 前缀索引的选择
+
+~~~mysql
+CREATE TABLE `user` (
+  `id` int(11) NOT NULL,
+  `name` varchar(20) DEFAULT NULL,
+  `email` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `name` (`name`)
+) ENGINE=InnoDB;
+
+alter table user add index index_email(email);
+alter table user add index index_email_6(email(6));
+~~~
+
+- 使用前缀索引，定义好长度，就可以做到既节省空间，又不用额外增加太多的查询成本
+
+- 给字符串创建前缀索引时，如何确定前缀索引的长度呢？
+
+  ~~~
+  select count(distinct(email)) from user;
+  mysql> select count(distinct left(email, 3))as l3,
+      -> count(distinct left(email, 4)) as l4,
+      -> count(distinct left(email, 5)) as l5
+      -> from user;
+  ~~~
+
+  - 按照预设的可以接受的区分度损失比例，选择合适的索引。
+
 # 附录
 
 ## 常用命令
