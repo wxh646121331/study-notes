@@ -1,4 +1,4 @@
-# 1 Lambda表达式
+1 Lambda表达式
 
 ## 1.1 基础语法
 
@@ -121,7 +121,74 @@ System.out.println(strs2.length);
 
 # 4 Stream API
 
+## 4.1 Stream简介
 
+- 集合讲的是数据，流讲的是计算
+- Stream特点：
+  - Stream自己不会存储元素
+  - Stream不会改变源对象，相反，他们会返回一个持有结果的新Stream
+  - Stream操作是延迟执行的，这意味着他们会等到需要结果的时候才执行。
+
+## 4.2 Stream操作的三个步骤
+
+- 创建 stream：一个数据源（如：集合、数组），获取一个流
+
+  - 获取流的方式：
+
+    - 可以通过Collection 系统集合提供的stream()或parallelStream()
+
+      ~~~java
+      List<String> list = new ArrayList<>();
+      Stream<String> stream1 = list.stream();
+      ~~~
+
+    - 通过Arrays中的静态方法stream()获取数据流
+
+      ~~~java
+      Employee[] emps = new Employee[10];
+      Stream<Employee> stream2 = Arrays.stream(emps);
+      ~~~
+
+    - 通过Stream类中的静态方法of()
+
+      ~~~java
+      Stream<String> stream3 = Stream.of("aa","bb","cc");
+      ~~~
+
+    - 创建无限流
+
+      ~~~java
+      //迭代
+      Stream<Integer> stream4 = Stream.iterate(0, x -> x+2);
+      stream4.limit(10).forEach(System.out::println);
+      //生成
+      Stream.generate(() -> Math.random()).limit(5).forEach(System.out::println);
+      ~~~
+
+- 中间操作：一个中间操作链，对数据源的数据进行处理
+
+  - 多个中间操作可以连接起来形成一个流水线，除非流水线上触发终止操作，否则中间操作不会执行任何的处理，而在终止操作时一次性全部处理，这外处理方法称为“惰性求值”
+
+  - 筛选与切片
+
+    - filter(Predicate p)——接收Lambda，从流中排除某些元素
+
+      ~~~java
+      List<Employee> employees = Arrays.asList(new Employee("wxh", 30),
+                      new Employee("tsb", 32),
+                      new Employee("www", 23),
+                      new Employee("dtt", 20));
+      Stream<Employee> stream = employees.stream().filter(e -> e.getAge()>=30);
+      stream.forEach(System.out::println);
+      ~~~
+
+    - distinct()
+
+  - 
+
+- 终止操作（终端操作）
+
+  - 一个终止操作，执行中间操作链，并产生结果
 
 # 5 接口中的默认方法与表态方法
 
