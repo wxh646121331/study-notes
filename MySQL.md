@@ -702,7 +702,69 @@ alter table user add index index_email_6(email(6));
 ## 11.4 思考题
 
 - 如果你在维护一个学校的学生信息数据库，学生登录名的统一格式是“学号@gmail.com”，而学号的规则 是：15位的数据，其中前三位是所有城市编号、第4到第6位是学校编号、第7位到第10位是入学年份，最后5位是顺序编号。系统登录的时候都需要学生输入登录名和密码，验证正确后才能继续使用系统，就只考虑登录验证这个行为的话，你会怎么设计这个登录名的索引呢？
-- 答：将学号前15号倒序存储，然后使用5位的前缀索引
+- 答：使用hash索引，哈希值为第7位到第15位数字
+
+# 12 为什么我的MySQL会“抖”一下？
+
+## 12.1 相关概念
+
+- flush : 将内存里的数据写入到磁盘的过程，称为flush，也称作“刷脏页”
+- 脏页：当内存里的数据页与磁盘不一致的时候，称这个数据页为“脏页”，将内存里的数据页写入磁盘后，内存数据页就与磁盘一致了，则数据页称为“干净页”
+- InnoDB用缓冲池”buffer pool“管理内存，缓冲池中的内存页有三种形态
+  - 没有使用的
+  - 已使用的脏页
+  - 已使用的干净页
+
+## 12.2 引发fush的原因
+
+- redo log写满，这时系统将不能接收任何的更新操作，所以这种情况是要尽量避免的
+- 系统内存不足，当需要新的数据页，而内存不够用时，就需要淘汰掉一些数据页，如果被淘汰的数据页刚好是”脏页“，就需要先将数据flush到磁盘
+  - 为什么不直接将数据页淘汰，下次需要使用的时候，从磁盘加载数据到内存，再应用redo log呢？
+    - 因为flush一定会写盘，这样就保证的数据页只有两种状态，这样查询效率会更高
+      - 内存中有，且为最新的数据，直接返回
+      - 内存中没有，磁盘中就是最新的数据，加载到内存后返回
+- MySQL认为系统”空闲“的时候
+- 系统正常关闭的时候，会把内存里的脏页都flush到磁盘，这样下次启动MySQL的时候，就可以直接从磁盘读数据，这样启动速度会很快
+
+## 12.3 InnoDB刷脏页的控制策略
+
+- 刷脏页虽然是常态，但是如果出现以下两种情况，是会明显影响性能的
+
+  - 一个查询需要淘汰的脏页太多，会导致查询的时间明显变长
+  - 日志写满，此时系统写性能迭为0，这种情况是业务不能接受的
+
+- 脏页控制策略及相关参数
+
+  - innodb_io_capacity : 设置磁盘能力，建议设置成磁盘的IOPS
+
+    - 磁盘的IOPS可以使用fio工具来测试
+
+  - innodb_max_dirty_pages_pct：脏页比例上限
+
+  - F1(M)计算规则（M为当前脏页比例）：
+
+    ~~~
+    F1(M)
+    {
+      if M>=innodb_max_dirty_pages_pct then
+          return 100;
+      return 100*M/innodb_max_dirty_pages_pct;
+    }
+    ~~~
+
+  - F2(N)（N为write point与check point之间的差值）：N越大，F2(N)越大
+
+  - 引擎控制刷脏页的速度根据以下公式：innodb_io_capacity*(max(F1(M), F2(N)))%
+
+- 查询脏页比例
+
+  ~~~mysql
+  select variable_value into @a from global_status where variable_name = 'INNODB_BUFFER_POOL_PAGES_DIRTY';
+  select variable_value into @b from global_status where variable_name = 'INNODB_BUFFER_POOL_PAGES_TOTAL';
+  select @a/@b;
+  ~~~
+
+  
 
 # 附录
 
@@ -737,6 +799,9 @@ alter table user add index index_email_6(email(6));
 | slow_query_log_file            | 查查询日志存储路径                                           |
 | long_query_time                | 慢查询阈值，默认为10秒                                       |
 | innodb_stats_persistent        | 采样统计存储方式                                             |
+| innodb_io_capacity             | 磁盘能力                                                     |
+| innodb_max_dirty_pages_pct     | 脏页比例上限                                                 |
+| innodb_flush_neighbors         | 刷脏页开启”连坐“机制                                         |
 
 ## 常用函数
 

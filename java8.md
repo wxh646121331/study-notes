@@ -1,4 +1,4 @@
-1 Lambda表达式
+# 1 Lambda表达式
 
 ## 1.1 基础语法
 
@@ -179,12 +179,31 @@ System.out.println(strs2.length);
                       new Employee("www", 23),
                       new Employee("dtt", 20));
       Stream<Employee> stream = employees.stream().filter(e -> e.getAge()>=30);
+      //内部迭代
       stream.forEach(System.out::println);
       ~~~
 
-    - distinct()
+    - limit——截断流，返回前n个元素的流
 
-  - 
+      ~~~java
+      Stream<Employee> stream = employees.stream().filter(e -> e.getAge()>=30).limit(1);
+              stream.forEach(System.out::println);
+      ~~~
+
+    - skip(n)——跳过元素，返回一个扔掉前n个元素的流。若流中不足n，则返回空流
+
+    - distinct——筛选，通过流所生成元素的hashCode()和equals()去除重复元素
+
+  - 映射
+
+    - map——接收Lambda，将元素转换成其他形式或提取信息。接收一个函数作为参数，该函数会应用到每个元素上，并将其映射成一个新的元素
+
+      ~~~java
+      List<String> list = Arrays.asList("aaa", "bbb", "ccc");
+      list.stream().map(str -> str.toUpperCase()).forEach(System.out::println);
+      ~~~
+
+    - flatMap——接收一个函数作为参数，将流中的每个值都换成另一个流，然后把所有流连接成一个流
 
 - 终止操作（终端操作）
 
@@ -195,4 +214,3 @@ System.out.println(strs2.length);
 # 6 新时间日期API
 
 # 7 其他新特性
-
