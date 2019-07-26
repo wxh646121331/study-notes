@@ -764,7 +764,65 @@ alter table user add index index_email_6(email(6));
   select @a/@b;
   ~~~
 
-  
+# 13 为什么表数据删掉一半，表文件大小不变？
+
+## 13.1 参数innodb_file_per_table
+
+- 建议将innodb_file_per_table这个参数设置为ON，因为一个表单独存储更容易管理，而且在不需要这个表的时候，通过drop table命令，系统就会直接删除掉这个文件。而如果放在共享表空间中，即使表删掉了，空间也是不会回收的
+
+## 13.2 数据删除流程
+
+- delete 命令只是把记录的位置，或者数据页标记为”可复用“，但磁盘文件的大小是不会变的
+
+- 重建表可以去掉表的的空洞：转存数据、交换表名、删除旧表
+
+  ~~~mysql
+  alter table table_name engine=InnoDB
+  ~~~
+
+## 13.3 思考题
+
+- 假设有人碰到了一个”想要收缩表空间，结果适得其反“的情况：
+
+  1. 一个表t文件大小为1TB
+  2. 对这个表执行alter table t engine=InnoDB;
+  3. 执行完后，空间不仅没变小，还稍微大了一点
+
+  可能是什么原因呢？
+
+- 答案
+
+  1. 表本身已经没有什么空洞了，比如刚刚做过一次重建表
+  2. 在DDL期间，如果刚好有外部的DML在执行，这期间可能会引入一些新的空洞
+  3. 在重建表的时候，InnoDB不会把整张表占满，每个页急留下了1/16给后续的更新用，也就是说，其实重建表之后不是最紧凑的。
+
+# 14 count(*)这么慢，该怎么办？
+
+## 14.1 count(*)的实现方式
+
+- MyISAM 引擎把一个表的总行数存在磁盘上
+- InnoDB 引擎在执行count(*)的时候，需要把数据一行一行地从引擎里面读出来，然后累积计数
+  - MySQL优化方式：MySQL优化器会找到最小的索引树来遍历，在保证逻辑正确的前提下，尽量减少扫描的数据量
+
+## 14.2 计数方案
+
+- 用缓存系统保存计数
+  - 缺点:
+    - 缓存系统可能会丢失更新
+    - 从缓存系统中取到的值是逻辑上不精确的（原因是两个不同的存储构成的系统，不支持分布式事务，无法拿到精确一致的视图）
+- 用数据库保存计数，可以解决崩溃丢失更新和逻辑上不精确的问题
+
+## 14.3 不同的count的用法
+
+- count(*)、count(主键 id)、和count(1)都表示返回满足条件的结果集的总和
+- count(字段)表示返回满足条件的数据行里面，参数”字段“不为NULL的总个数
+- count(主键 id)：InnoDB引擎会遍历整张表，把每一行的id值都取出来，返回给server层。server层拿到id后，判断是不可以为空的，就按行累加
+- count(1)：InnoDB引擎遍历整张表，但不取值。server层对于返回的每一行，放一个数字”1“进去，判断是不可能为空的，按行累加
+- count(字段)：
+  - 如果这个字段定义为not null的话，一行行地从记录里面读出这个字段，判断不能为null，按行累加
+  - 如果这个字段定义允许为null，那么执行的时候，判断到有可以是null，还要把值取出来再判断一下，不是null才累加
+- count(*)：不会把全部字段取出来，而是专门做了优化，不取值。count(\*)肯定不是null，按行累加
+- 效率排序：count(字段)<count(主键 id)<count(1)≈count(*)
 
 # 附录
 
@@ -776,7 +834,7 @@ alter table user add index index_email_6(email(6));
 | show processlist;                 | 查看连接状态，等价于select * from information_schema.processlist; |
 | show databases;                   | 查询所有schema                                               |
 | use database_name;                | 切换scheme                                                   |
-| use tables;                       | 查询当前数据库下所有的表                                     |
+| show tables;                      | 查询当前数据库下所有的表                                     |
 | desc table_name;                  | 查看表结构                                                   |
 | show variables like '%tx%';       | 查看参数配置                                                 |
 | show full columns from tb_nam;    | 查看表结构详细                                               |
@@ -785,6 +843,7 @@ alter table user add index index_email_6(email(6));
 | show procedure status;            | 查看存储过程                                                 |
 | show create procedure proc_name;  | 查看存储过程创建代码                                         |
 | show create function func_name;   | 查看函数创建代码                                             |
+| show table status;                | 查看表状态                                                   |
 
 ## 常用参数
 
@@ -802,6 +861,7 @@ alter table user add index index_email_6(email(6));
 | innodb_io_capacity             | 磁盘能力                                                     |
 | innodb_max_dirty_pages_pct     | 脏页比例上限                                                 |
 | innodb_flush_neighbors         | 刷脏页开启”连坐“机制                                         |
+| innodb_file_per_table          | 控制表数据的存放，ON表示每个InnoDB表数据存储在一个以.idb为后缀的文件中，OFF表示表数据放在系统共享表空间中，也就是跟数据字典放在一起，从MySQL 5.6.6 版本开始，默认值是ON |
 
 ## 常用函数
 

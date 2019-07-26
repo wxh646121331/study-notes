@@ -43,6 +43,7 @@ puml：http://plantuml.com
 | Command + Option + 方向键右 | 前进到上一个操作的地方                                       |
 | Command + Shift + O         | 查找所有类型文件、打开文件、打开目录，打开目录需要在输入的内容前面或后面加一个反斜杠`/` |
 | Command + Option + O        | 前往指定的变量 / 方法                                        |
+| control + option + O        | 去掉无效引用                                                 |
 
 
 
