@@ -824,6 +824,24 @@ alter table user add index index_email_6(email(6));
 - count(*)：不会把全部字段取出来，而是专门做了优化，不取值。count(\*)肯定不是null，按行累加
 - 效率排序：count(字段)<count(主键 id)<count(1)≈count(*)
 
+# 15 日志和索引相关问题
+
+- MySQL崩溃恢复时的判断规则
+  - 如果redo log里的事务的完整的，也就是已经有commit 标识，直接提交
+  - 如果redo log里只有完整的prepare标识，则判断对应事务的binlog是否存在并完整
+    - 如果是，则提交事务
+    - 否则，回滚事务
+- 如何判断binlog是否完整？
+  - MySQL的binlog是有完整格式的
+    - statement格式的binlog，最后会有COMMIT
+    - row格式的binlog，最后会有XID EVENT
+    - 另外，参数binlog_checksum可以用来验证binlog内容的正确性
+- redo log和bin log是怎么关联起来的？
+  - 它们有一个共同的字段XID，崩溃恢复的时候，会按顺序扫描redo log
+    - 如果扫描到既有prepare，也有commit标记的redo log，直接提交
+    - 如果扫描到只有prepare但没有commit的redo log，则拿XID去找bin log对应的事务
+- 
+
 # 附录
 
 ## 常用命令
@@ -862,6 +880,7 @@ alter table user add index index_email_6(email(6));
 | innodb_max_dirty_pages_pct     | 脏页比例上限                                                 |
 | innodb_flush_neighbors         | 刷脏页开启”连坐“机制                                         |
 | innodb_file_per_table          | 控制表数据的存放，ON表示每个InnoDB表数据存储在一个以.idb为后缀的文件中，OFF表示表数据放在系统共享表空间中，也就是跟数据字典放在一起，从MySQL 5.6.6 版本开始，默认值是ON |
+| binlog_checksum                | 验证binlog内容的正确性                                       |
 
 ## 常用函数
 
