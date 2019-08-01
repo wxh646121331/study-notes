@@ -661,6 +661,8 @@ echo "I love you" >> wxh.txt
 
 ## 10.3 awk
 
+cat request.log | awk '$2 >="15:02:56.577" && $2 <="15:02:56.584"'
+
 - 基本语法
 
   - awk [选项] 'pattern1{action1} pattern2{action2}…' filename 

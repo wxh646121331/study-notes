@@ -157,17 +157,17 @@ origin	https://github.com/wxh646121331/study-notes.git (push)
 
 ## 2.3 push操作
 
+### 2.3.1 推送到远程分支
+
 ~~~
 git push origin master
 ~~~
 
-- 删除远程分支
+### 2.3.2 删除远程分支
 
-  ~~~
-  git push --delete origin branchName
-  ~~~
-
-  
+~~~
+git push --delete origin branchName
+~~~
 
 ## 2.4 克隆操作
 

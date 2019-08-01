@@ -840,7 +840,41 @@ alter table user add index index_email_6(email(6));
   - 它们有一个共同的字段XID，崩溃恢复的时候，会按顺序扫描redo log
     - 如果扫描到既有prepare，也有commit标记的redo log，直接提交
     - 如果扫描到只有prepare但没有commit的redo log，则拿XID去找bin log对应的事务
-- 
+- 处于prepare阶段的redo log加上完整的bin log，重启就能恢复，MySQL为什么要这样设计？
+  - 为了保证主备一致性，备库按bin log同步主库数据，bin log写完，备库就会从主库同步
+
+# 16 order by是怎么工作的？
+
+## 16.1 全字段排序
+
+- 把需要排序的全部字段都放到内存中或临时文件中进行排序
+
+- 确定排序语句是否使用了临时文件的方法
+
+  ~~~mysql
+  /* 打开 optimizer_trace，只对本线程有效 */
+  SET optimizer_trace='enabled=on'; 
+  
+  /* @a 保存 Innodb_rows_read 的初始值 */
+  select VARIABLE_VALUE into @a from  performance_schema.session_status where variable_name = 'Innodb_rows_read';
+  
+  /* 执行语句 */
+  select city, name,age from t where city='杭州' order by name limit 1000; 
+  
+  /* 查看 OPTIMIZER_TRACE 输出 */
+  SELECT * FROM `information_schema`.`OPTIMIZER_TRACE`\G
+  
+  /* @b 保存 Innodb_rows_read 的当前值 */
+  select VARIABLE_VALUE into @b from performance_schema.session_status where variable_name = 'Innodb_rows_read';
+  
+  /* 计算 Innodb_rows_read 差值 */
+  select @b-@a;
+  
+  ~~~
+
+## 16.2 rowid排序
+
+- 若单行的数据长度超max_length_for_sort_data，则只将要排序的字段和主键id放入sort_buffer中进行排序
 
 # 附录
 
@@ -865,22 +899,27 @@ alter table user add index index_email_6(email(6));
 
 ## 常用参数
 
-| 参数                           | 说明                                                         |
-| ------------------------------ | ------------------------------------------------------------ |
-| innodb_flush_log_at_trx_commit | 设置成 1 的时候表示每次事务的 redo log 都直接持久化到磁盘，建议设置成 1，这样可以保证 MySQL 异常重启之后数据不丢失 |
-| sync_binlog                    | 设置成1表示每次事务的 binlog 都持久化到磁盘，建议设置成 1，可以保证 MySQL 异常重启之后 binlog 不丢失 |
-| innodb_lock_wait_timeout       | 锁等待超时时间                                               |
-| innodb_deadlock_detect         | 是否开启主动死锁检测                                         |
-| innodb_change_buffer_max_size  | change buffer占用buffer pool的百分比                         |
-| slow_query_log                 | 慢查询日志开关                                               |
-| slow_query_log_file            | 查查询日志存储路径                                           |
-| long_query_time                | 慢查询阈值，默认为10秒                                       |
-| innodb_stats_persistent        | 采样统计存储方式                                             |
-| innodb_io_capacity             | 磁盘能力                                                     |
-| innodb_max_dirty_pages_pct     | 脏页比例上限                                                 |
-| innodb_flush_neighbors         | 刷脏页开启”连坐“机制                                         |
-| innodb_file_per_table          | 控制表数据的存放，ON表示每个InnoDB表数据存储在一个以.idb为后缀的文件中，OFF表示表数据放在系统共享表空间中，也就是跟数据字典放在一起，从MySQL 5.6.6 版本开始，默认值是ON |
-| binlog_checksum                | 验证binlog内容的正确性                                       |
+| 参数                             | 说明                                                         |
+| -------------------------------- | ------------------------------------------------------------ |
+| innodb_flush_log_at_trx_commit   | 设置成 1 的时候表示每次事务的 redo log 都直接持久化到磁盘，建议设置成 1，这样可以保证 MySQL 异常重启之后数据不丢失 |
+| sync_binlog                      | 设置成1表示每次事务的 binlog 都持久化到磁盘，建议设置成 1，可以保证 MySQL 异常重启之后 binlog 不丢失 |
+| innodb_lock_wait_timeout         | 锁等待超时时间                                               |
+| innodb_deadlock_detect           | 是否开启主动死锁检测                                         |
+| innodb_change_buffer_max_size    | change buffer占用buffer pool的百分比                         |
+| slow_query_log                   | 慢查询日志开关                                               |
+| slow_query_log_file              | 查查询日志存储路径                                           |
+| long_query_time                  | 慢查询阈值，默认为10秒                                       |
+| innodb_stats_persistent          | 采样统计存储方式                                             |
+| innodb_io_capacity               | 磁盘能力                                                     |
+| innodb_max_dirty_pages_pct       | 脏页比例上限                                                 |
+| innodb_flush_neighbors           | 刷脏页开启”连坐“机制                                         |
+| innodb_file_per_table            | 控制表数据的存放，ON表示每个InnoDB表数据存储在一个以.idb为后缀的文件中，OFF表示表数据放在系统共享表空间中，也就是跟数据字典放在一起，从MySQL 5.6.6 版本开始，默认值是ON |
+| binlog_checksum                  | 验证binlog内容的正确性                                       |
+| sort_buffer_size                 | sort_buffer的大小，如果要排序的数据量小于sort_buffer_size，排序就在内存中完成，如果内存放不下，则不得不利用磁盘临时文件辅助排序 |
+| optimizer_trace                  |                                                              |
+| internal_tmp_disk_storage_engine | 设置临时表引擎                                               |
+| max_length_for_sort_data         | 排序数据单行最大长度                                         |
+|                                  |                                                              |
 
 ## 常用函数
 
