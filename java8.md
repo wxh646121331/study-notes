@@ -131,79 +131,105 @@ System.out.println(strs2.length);
 
 ## 4.2 Stream操作的三个步骤
 
-- 创建 stream：一个数据源（如：集合、数组），获取一个流
+### 4.2.1 创建stream
 
-  - 获取流的方式：
+- 一个数据源（如：集合、数组），获取一个流
 
-    - 可以通过Collection 系统集合提供的stream()或parallelStream()
+- 获取流的方式：
 
-      ~~~java
-      List<String> list = new ArrayList<>();
-      Stream<String> stream1 = list.stream();
-      ~~~
+  - 可以通过Collection 系统集合提供的stream()或parallelStream()
 
-    - 通过Arrays中的静态方法stream()获取数据流
+    ~~~java
+    List<String> list = new ArrayList<>();
+    Stream<String> stream1 = list.stream();
+    ~~~
 
-      ~~~java
-      Employee[] emps = new Employee[10];
-      Stream<Employee> stream2 = Arrays.stream(emps);
-      ~~~
+  - 通过Arrays中的静态方法stream()获取数据流
 
-    - 通过Stream类中的静态方法of()
+    ~~~java
+    Employee[] emps = new Employee[10];
+    Stream<Employee> stream2 = Arrays.stream(emps);
+    ~~~
 
-      ~~~java
-      Stream<String> stream3 = Stream.of("aa","bb","cc");
-      ~~~
+  - 通过Stream类中的静态方法of()
 
-    - 创建无限流
+    ~~~java
+    Stream<String> stream3 = Stream.of("aa","bb","cc");
+    ~~~
 
-      ~~~java
-      //迭代
-      Stream<Integer> stream4 = Stream.iterate(0, x -> x+2);
-      stream4.limit(10).forEach(System.out::println);
-      //生成
-      Stream.generate(() -> Math.random()).limit(5).forEach(System.out::println);
-      ~~~
+  - 创建无限流
 
-- 中间操作：一个中间操作链，对数据源的数据进行处理
+    ~~~java
+    //迭代
+    Stream<Integer> stream4 = Stream.iterate(0, x -> x+2);
+    stream4.limit(10).forEach(System.out::println);
+    //生成
+    Stream.generate(() -> Math.random()).limit(5).forEach(System.out::println);
+    ~~~
 
-  - 多个中间操作可以连接起来形成一个流水线，除非流水线上触发终止操作，否则中间操作不会执行任何的处理，而在终止操作时一次性全部处理，这外处理方法称为“惰性求值”
+### 4.2.2 中间操作
 
-  - 筛选与切片
+- 一个中间操作链，对数据源的数据进行处理
 
-    - filter(Predicate p)——接收Lambda，从流中排除某些元素
+- 多个中间操作可以连接起来形成一个流水线，除非流水线上触发终止操作，否则中间操作不会执行任何的处理，而在终止操作时一次性全部处理，这外处理方法称为“惰性求值”
 
-      ~~~java
-      List<Employee> employees = Arrays.asList(new Employee("wxh", 30),
-                      new Employee("tsb", 32),
-                      new Employee("www", 23),
-                      new Employee("dtt", 20));
-      Stream<Employee> stream = employees.stream().filter(e -> e.getAge()>=30);
-      //内部迭代
-      stream.forEach(System.out::println);
-      ~~~
+- 筛选与切片
 
-    - limit——截断流，返回前n个元素的流
+  - filter(Predicate p)——接收Lambda，从流中排除某些元素
 
-      ~~~java
-      Stream<Employee> stream = employees.stream().filter(e -> e.getAge()>=30).limit(1);
-              stream.forEach(System.out::println);
-      ~~~
+    ~~~java
+    List<Employee> employees = Arrays.asList(new Employee("wxh", 30),
+                    new Employee("tsb", 32),
+                    new Employee("www", 23),
+                    new Employee("dtt", 20));
+    Stream<Employee> stream = employees.stream().filter(e -> e.getAge()>=30);
+    //内部迭代
+    stream.forEach(System.out::println);
+    ~~~
 
-    - skip(n)——跳过元素，返回一个扔掉前n个元素的流。若流中不足n，则返回空流
+  - limit——截断流，返回前n个元素的流
 
-    - distinct——筛选，通过流所生成元素的hashCode()和equals()去除重复元素
+    ~~~java
+    Stream<Employee> stream = employees.stream().filter(e -> e.getAge()>=30).limit(1);
+            stream.forEach(System.out::println);
+    ~~~
+
+  - skip(n)——跳过元素，返回一个扔掉前n个元素的流。若流中不足n，则返回空流
+
+  - distinct——筛选，通过流所生成元素的hashCode()和equals()去除重复元素
 
   - 映射
 
-    - map——接收Lambda，将元素转换成其他形式或提取信息。接收一个函数作为参数，该函数会应用到每个元素上，并将其映射成一个新的元素
+  - map——接收Lambda，将元素转换成其他形式或提取信息。接收一个函数作为参数，该函数会应用到每个元素上，并将其映射成一个新的元素
 
-      ~~~java
-      List<String> list = Arrays.asList("aaa", "bbb", "ccc");
-      list.stream().map(str -> str.toUpperCase()).forEach(System.out::println);
-      ~~~
+    ~~~java
+    List<String> list = Arrays.asList("aaa", "bbb", "ccc");
+    list.stream().map(str -> str.toUpperCase()).forEach(System.out::println);
+    ~~~
 
-    - flatMap——接收一个函数作为参数，将流中的每个值都换成另一个流，然后把所有流连接成一个流
+  - flatMap——接收一个函数作为参数，将流中的每个值都换成另一个流，然后把所有流连接成一个流
+
+    ~~~java
+    @Test
+        public void test(){
+            List<String> list = Arrays.asList("aaa", "bbb", "ccc");
+            Stream<Stream<Character>> st = list.stream().map(TestStream::filter);
+            st.forEach(x -> x.forEach(System.out::println));
+            Stream<Character> st1 = list.stream().flatMap(TestStream::filter);
+            st1.forEach(System.out::println);
+    
+        }
+    
+        public static Stream<Character> filter(String str){
+            List<Character> list = new ArrayList<>();
+            for(Character c : str.toCharArray()){
+                list.add(c);
+            }
+            return list.stream();
+        }
+    ~~~
+
+    
 
 - 终止操作（终端操作）
 

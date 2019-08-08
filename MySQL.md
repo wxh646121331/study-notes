@@ -876,6 +876,63 @@ alter table user add index index_email_6(email(6));
 
 - 若单行的数据长度超max_length_for_sort_data，则只将要排序的字段和主键id放入sort_buffer中进行排序
 
+# 17 如何正确地显示随机消息？
+
+## 17.1 数据准备
+
+- 建表，存储过程写入10000条数据
+
+  ~~~mysql
+  mysql> CREATE TABLE `words` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `word` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+  ) ENGINE=InnoDB;
+  delimiter ;;
+  create procedure idata()
+  begin
+    declare i int;
+    set i=0;
+    while i<10000 do
+      insert into words(word) values(concat(char(97+(i div 1000)), char(97+(i % 1000 div 100)), char(97+(i % 100 div 10)), char(97+(i % 10))));
+      set i=i+1;
+    end while;
+  end;;
+  delimiter ;
+  call idata();
+  ~~~
+
+ 
+
+## 17.2 内存临时表
+
+- 随机取三条记录，执行计划如下 
+
+  ~~~mysql
+  mysql> explain select * from words order by rand() limit 3\G
+    *************************** 1. row ***************************
+               id: 1
+      select_type: SIMPLE
+            table: words
+             type: ALL
+    possible_keys: NULL
+              key: NULL
+          key_len: NULL
+              ref: NULL
+             rows: 9980
+            Extra: Using temporary; Using filesort
+    1 row in set (0.00 sec)
+  ~~~
+
+  - Using temporary——表示需要使用内存临时表
+  - Using filesort——说明需要排序
+
+- 对于内存表，回表只用根据数据行的位置在内存中取得数据，不会造成多访问磁盘，因此这种场景，InnoDB会选择使用rowId排序
+
+- rowid——引擎用来唯一标识数据行的信息
+
+  - 对于
+
 # 附录
 
 ## 常用命令
