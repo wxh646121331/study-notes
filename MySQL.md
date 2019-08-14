@@ -931,7 +931,38 @@ alter table user add index index_email_6(email(6));
 
 - rowid——引擎用来唯一标识数据行的信息
 
-  - 对于
+  - 对于有主键的InnoDB表来说，主键就是rowid
+  - 对于没有主键的InnoDB表来说，系统会自动生成6字节的rowid
+  - Memory引擎不是索引组织表，可以认为它就是一个数组，因此，这个rowid其实就是数据的下标
+
+## 17.3 磁盘临时表
+
+- 磁盘临时表的默认引擎是InnoDB，由参数default_tmp_storage_engine设置磁盘临时表引擎
+- MySQL 5.6引入了优先队列排序算法
+
+
+
+# 18 为什么这些语句逻辑相同，性能却差异巨大？
+
+## 18.1 条件字段函数操作
+
+- 对索引字段做函数操作，可能会破坏索引值的有序性，因此优化器会决定放弃搜索索引树
+- 即便是不改变有序性的函数操作，优化器也会放弃搜索索引树
+
+## 18.2 隐式类型转换
+
+- 数据类型转换的规则是什么？
+  - 字符串与数字做比较，会将字符串转换成数据：select "10">9
+- 为什么有数据类型转换，就需要走全索引扫描？
+
+## 18.3 隐式字符编码转换
+
+~~~mysql
+//修改字段字符编码
+alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 default null;
+~~~
+
+- utf8mb4是utf8的超类，utf8mb4与utf8做比较，utf8会被隐式转换成utf8mb4
 
 # 附录
 
@@ -976,6 +1007,16 @@ alter table user add index index_email_6(email(6));
 | optimizer_trace                  |                                                              |
 | internal_tmp_disk_storage_engine | 设置临时表引擎                                               |
 | max_length_for_sort_data         | 排序数据单行最大长度                                         |
+| tmp_table_size                   | 内存临时表的大小限制                                         |
+| default_tmp_storage_engine       | 设置磁盘临时表的存储引擎                                     |
+|                                  |                                                              |
+|                                  |                                                              |
+|                                  |                                                              |
+|                                  |                                                              |
+|                                  |                                                              |
+|                                  |                                                              |
+|                                  |                                                              |
+|                                  |                                                              |
 |                                  |                                                              |
 
 ## 常用函数
@@ -1007,3 +1048,12 @@ alter table user add index index_email_6(email(6));
 | %S   | 秒，格式为00……59                  |
 | %s   | 秒                                |
 
+# explain相关说明
+
+- extra
+
+  | 执行结果    | 说明           |
+  | ----------- | -------------- |
+  | using index | 使用了覆盖索引 |
+
+  
