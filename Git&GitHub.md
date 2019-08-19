@@ -117,6 +117,8 @@
 - git merge [有新内容的分支]
   
   - 分支合并
+  
+- git reset --hard HEAD 撤销合并
 
 ## 1.8 解决冲突
 

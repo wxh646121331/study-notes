@@ -964,6 +964,38 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 
 - utf8mb4是utf8的超类，utf8mb4与utf8做比较，utf8会被隐式转换成utf8mb4
 
+
+
+# 19 为什么我只查一行语句，也这么慢？
+
+- 数据准备
+
+  ~~~
+  //建表
+  create table t19( id int(11) not null, c int(11) default null, primary key (id));
+  //存储过程写入数据
+  delimiter ;;
+  mysql> create procedure pro_19()
+      -> begin
+      -> declare i int;
+      -> set i=1;
+      -> while(i<=100000) do
+      -> insert into t19 values(i,i);
+      -> set i=i+1;
+      -> end while;
+      -> end;;
+  mysql> delimiter ;
+  mysql> call pro_19();
+  ~~~
+
+## 19.1 查询长时间不返回
+
+| session A             | session B                     |
+| --------------------- | ----------------------------- |
+| lock table t19 write; | select * from t19 where id=1; |
+
+
+
 # 附录
 
 ## 常用命令
