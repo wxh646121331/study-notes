@@ -996,6 +996,14 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 
 
 
+# 20 幻读是什么？幻读有什么问题？
+
+- 幻读：指的是一个事务在前后两次查询同一范围的时候，后一次查询看到了前一次查询没有看到的行。
+- 幻读引起的问题：
+  - 幻读会导致语义被破坏
+  - 幻读会引入数据不一致问题
+- 间隙锁：
+
 # 附录
 
 ## 常用命令
@@ -1016,6 +1024,9 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 | show create procedure proc_name;  | 查看存储过程创建代码                                         |
 | show create function func_name;   | 查看函数创建代码                                             |
 | show table status;                | 查看表状态                                                   |
+| kill connection+id                | 断开连接                                                     |
+|                                   |                                                              |
+|                                   |                                                              |
 
 ## 常用参数
 
@@ -1041,10 +1052,10 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 | max_length_for_sort_data         | 排序数据单行最大长度                                         |
 | tmp_table_size                   | 内存临时表的大小限制                                         |
 | default_tmp_storage_engine       | 设置磁盘临时表的存储引擎                                     |
-|                                  |                                                              |
-|                                  |                                                              |
-|                                  |                                                              |
-|                                  |                                                              |
+| max_connections                  | 最大连接数                                                   |
+| binlog_cache_size                | 单个线程的binlog_cache所占内存的大小                         |
+| sync_binlog                      | 控制binlog的write和fsync写入时机，0表示每次提交事务都只write，不fsync；1表示每次提交事务的时候都会执行fsync；N>1表示每次提交事务都write，但累计提交N个事务后再fsync |
+| innodb_flush_log_at_trx_commit   | redo log的写入策略：0每次事务提交的时候都只把redo log留在redo log buffer中；1表示每次提交事务的时候都将redo log持久化到磁盘；2表示每次提交事务的时候都只把redo log写到page cache |
 |                                  |                                                              |
 |                                  |                                                              |
 |                                  |                                                              |
@@ -1079,6 +1090,23 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 | %T   | 时间，格式为24小时hh:mm:ss        |
 | %S   | 秒，格式为00……59                  |
 | %s   | 秒                                |
+
+## 系统表
+
+### information_schema库
+
+| 表名        | 说明           |
+| ----------- | -------------- |
+| INNODB_TRX  | 事务表         |
+| PROCESSLIST | 当前连接的线程 |
+|             |                |
+|             |                |
+|             |                |
+|             |                |
+|             |                |
+|             |                |
+
+
 
 # explain相关说明
 

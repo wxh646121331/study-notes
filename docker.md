@@ -243,6 +243,148 @@
 
 - 备份数据库：docker exec 容器ID sh -c ' exec mysqldump --all-databases -uroot -p"123456" ' > E:/docker/mysql/all-databases.sql
 
+### 7.2.1 主从复制搭建
+
+- 在docker启动两个mysql容器
+
+  ~~~
+  //创建第一台mysql
+  docker run --name mysql_1 -v ~/docker/mysql/mysql_1/custom:/etc/mysql/conf.d -v ~/docker/mysql/mysql_1/data:/var/lib/mysql -p 3309:3306 -e MYSQL_ROOT_PASSWORD=123456 -d mysql:8.0
+  
+  //创建第二台mysql
+  docker run --name mysql_2 -v ~/docker/mysql/mysql_2/custom:/etc/mysql/conf.d -v ~/docker/mysql/mysql_2/data:/var/lib/mysql -p 3310:3306 -e MYSQL_ROOT_PASSWORD=123456 -d mysql:8.0
+  ~~~
+
+- 查看mysql的ip地址
+
+  ~~~
+  admindeMacBook-Pro:~ wuxinhong$ docker inspect --format='{{.NetworkSettings.IPAddress}}' mysql_1
+  172.17.0.3
+  admindeMacBook-Pro:~ wuxinhong$ docker inspect --format='{{.NetworkSettings.IPAddress}}' mysql_2
+  172.17.0.4
+  ~~~
+
+- 在容器中安装vim
+
+  ~~~
+  apt-get update
+  apt-get install vim
+  ~~~
+
+  
+
+- 配置主服务器，修改/etc/mysql/my.cnf
+
+  ~~~
+  [mysqld]
+  ## 设置server_id，一般设置为IP，同一局域网内注意要唯一
+  server_id=100
+  ## 复制过滤：也就是指定哪个数据库不用同步（mysql库一般不同步）
+  binlog-ignore-db=mysql
+  ## 开启二进制日志功能，可以随便取，最好有含义（关键就是这里了）
+  log-bin=edu-mysql-bin
+  ## 为每个session 分配的内存，在事务过程中用来存储二进制日志的缓存
+  binlog_cache_size=1M
+  ## 主从复制的格式（mixed,statement,row，默认格式是statement）
+  binlog_format=mixed
+  ## 二进制日志自动删除/过期的天数。默认值为0，表示不自动删除。
+  expire_logs_days=7
+  ## 跳过主从复制中遇到的所有错误或指定类型的错误，避免slave端复制中断。
+  ## 如：1062错误是指一些主键重复，1032错误是因为主从数据库数据不一致
+  slave_skip_errors=1062
+  ~~~
+
+- 重启容器
+
+  ~~~
+  docker restart mysql_1
+  ~~~
+
+- 创建数据同步用户
+
+  ~~~
+  mysql -uroot -p123456
+  CREATE USER 'slave'@'%' IDENTIFIED BY '123456';
+  GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'slave'@'%';
+  ~~~
+
+- 配置从服务器
+
+  ~~~
+  [mysqld]
+  ## 设置server_id，一般设置为IP,注意要唯一
+  server_id=101  
+  ## 复制过滤：也就是指定哪个数据库不用同步（mysql库一般不同步）
+  binlog-ignore-db=mysql  
+  ## 开启二进制日志功能，以备Slave作为其它Slave的Master时使用
+  log-bin=edu-mysql-slave1-bin  
+  ## 为每个session 分配的内存，在事务过程中用来存储二进制日志的缓存
+  binlog_cache_size=1M  
+  ## 主从复制的格式（mixed,statement,row，默认格式是statement）
+  binlog_format=mixed  
+  ## 二进制日志自动删除/过期的天数。默认值为0，表示不自动删除。
+  expire_logs_days=7  
+  ## 跳过主从复制中遇到的所有错误或指定类型的错误，避免slave端复制中断。
+  ## 如：1062错误是指一些主键重复，1032错误是因为主从数据库数据不一致
+  slave_skip_errors=1062  
+  ## relay_log配置中继日志
+  relay_log=edu-mysql-relay-bin  
+  ## log_slave_updates表示slave将复制事件写进自己的二进制日志
+  log_slave_updates=1  
+  ## 防止改变数据(除了特殊的线程)
+  read_only=1
+  ~~~
+
+- 重启从服务器
+
+  ~~~
+  docker restart mysql_2
+  ~~~
+
+- 进入master
+
+  ~~~
+  mysql> show master status;
+  +----------------------+----------+--------------+------------------+-------------------+
+  | File                 | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+  +----------------------+----------+--------------+------------------+-------------------+
+  | edu-mysql-bin.000004 |      433 |              | mysql            |                   |
+  +----------------------+----------+--------------+------------------+-------------------+
+  1 row in set (0.00 sec)
+  ~~~
+
+- 进入slave
+
+  ~~~
+  change master to master_host='172.17.0.2', master_user='slave', master_password='123456', master_port=3306, master_log_file='edu-mysql-bin.000001', master_log_pos=929, master_connect_retry=30;  
+  ~~~
+
+  命令解释：
+
+  ~~~
+  master_host: Master 的IP地址
+  master_user: 在 Master 中授权的用于数据同步的用户
+  master_password: 同步数据的用户的密码
+  master_port: Master 的数据库的端口号
+  master_log_file: 指定 Slave 从哪个日志文件开始复制数据，即上文中提到的 File 字段的值
+  master_log_pos: 从哪个 Position 开始读，即上文中提到的 Position 字段的值
+  master_connect_retry: 当重新建立主从连接时，如果连接失败，重试的时间间隔，单位是秒，默认是60秒。
+  ~~~
+
+  查看主从同步状态
+
+  ~~~
+  show slave status \G
+  ~~~
+
+  开启主从同步
+
+  ~~~
+  start slave;
+  ~~~
+
+  
+
 ## 7.2 安装Redis
 
 # 8 本地镜像发布到阿里云

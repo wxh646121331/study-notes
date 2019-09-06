@@ -198,42 +198,101 @@ System.out.println(strs2.length);
 
   - distinct——筛选，通过流所生成元素的hashCode()和equals()去除重复元素
 
-  - 映射
+- 映射
+    - map——接收Lambda，将元素转换成其他形式或提取信息。接收一个函数作为参数，该函数会应用到每个元素上，并将其映射成一个新的元素
 
-  - map——接收Lambda，将元素转换成其他形式或提取信息。接收一个函数作为参数，该函数会应用到每个元素上，并将其映射成一个新的元素
+      ~~~java
+      List<String> list = Arrays.asList("aaa", "bbb", "ccc");
+      list.stream().map(str -> str.toUpperCase()).forEach(System.out::println);
+      ~~~
 
-    ~~~java
-    List<String> list = Arrays.asList("aaa", "bbb", "ccc");
-    list.stream().map(str -> str.toUpperCase()).forEach(System.out::println);
-    ~~~
+    - flatMap——接收一个函数作为参数，将流中的每个值都换成另一个流，然后把所有流连接成一个流
 
-  - flatMap——接收一个函数作为参数，将流中的每个值都换成另一个流，然后把所有流连接成一个流
-
-    ~~~java
+      ~~~java
     @Test
-        public void test(){
-            List<String> list = Arrays.asList("aaa", "bbb", "ccc");
-            Stream<Stream<Character>> st = list.stream().map(TestStream::filter);
-            st.forEach(x -> x.forEach(System.out::println));
-            Stream<Character> st1 = list.stream().flatMap(TestStream::filter);
-            st1.forEach(System.out::println);
+      public void test(){
+          List<String> list = Arrays.asList("aaa", "bbb", "ccc");
+          Stream<Stream<Character>> st = list.stream().map(TestStream::filter);
+          st.forEach(x -> x.forEach(System.out::println));
+          Stream<Character> st1 = list.stream().flatMap(TestStream::filter);
+          st1.forEach(System.out::println);
     
-        }
+      }
     
-        public static Stream<Character> filter(String str){
-            List<Character> list = new ArrayList<>();
-            for(Character c : str.toCharArray()){
-                list.add(c);
-            }
-            return list.stream();
-        }
+      public static Stream<Character> filter(String str){
+          List<Character> list = new ArrayList<>();
+          for(Character c : str.toCharArray()){
+              list.add(c);
+          }
+          return list.stream();
+      }
     ~~~
 
-    
+- 排序
 
-- 终止操作（终端操作）
+  - 自然排序：sorted()
 
-  - 一个终止操作，执行中间操作链，并产生结果
+    ~~~java
+    List<String> list = Arrays.asList("ccc", "aaa", "bbb","ddd", "eee");        list.stream().sorted().forEach(System.out::println);
+    ~~~
+
+  - 定制排序
+
+      ~~~java
+      List<Employee> employeeList = new ArrayList<>();
+              Employee e1 = new Employee("wxh", 28);
+              Employee e2 = new Employee("tsf", 15);
+              employeeList.add(e1);
+              employeeList.add(e2);
+              employeeList.stream().sorted((Comparator.comparingInt(Employee::getAge))).forEach(System.out::println);
+      ~~~
+
+## 4.2.3 终止操作（终端操作）
+
+- 一个终止操作，执行中间操作链，并产生结果
+
+- 查找与匹配
+
+  ~~~java
+  List<Employee> employeeList = new ArrayList<>();
+  Employee e1 = new Employee("wxh", 28, Status.FREE);
+  Employee e2 = new Employee("tsf", 15, Status.BUSI);
+  employeeList.add(e1);
+  employeeList.add(e2);
+  boolean b1 = employeeList.stream().allMatch(e -> e.getStatus().equals(Status.BUSI));
+  System.out.println(b1);
+  boolean b2 = employeeList.stream().anyMatch(e -> e.getStatus().equals(Status.BUSI));
+  System.out.println(b2);
+  boolean b3 = employeeList.stream().noneMatch(e -> e.getStatus().equals(Status.BUSI));
+  System.out.println(b3);
+  Optional<Employee> op = employeeList.stream().sorted(Comparator.comparingInt(Employee::getAge)).findFirst();
+  System.out.println(op.get());
+  Optional<Employee> op1 = employeeList.stream().filter(e->e.getStatus().equals(Status.FREE)).findAny();
+  System.out.println(op1.get());
+  Long count = employeeList.stream().count();
+  System.out.println(count);
+  Optional<Employee> op2=employeeList.stream().max(Comparator.comparingInt(Employee::getAge));
+  System.out.println(op2.get());
+  Optional<Integer> op3 = employeeList.stream().map(Employee::getAge).max(Integer::compareTo);
+  System.out.println(op3.get());
+  ~~~
+
+- 归约
+
+  ~~~java
+          List<Integer> list = Arrays.asList(1,2,3,4,5,6,7,8,9,10);
+          Integer sum = list.stream().reduce(0, Integer::sum);
+          System.out.println(sum);
+          List<Employee> employeeList = new ArrayList<>();
+          Employee e1 = new Employee("wxh", 28, Status.FREE);
+          Employee e2 = new Employee("tsf", 15, Status.BUSI);
+          employeeList.add(e1);
+          employeeList.add(e2);
+          Optional<Integer> op = employeeList.stream().map(Employee::getAge).reduce(Integer::sum);
+          System.out.println(op.get());
+  ~~~
+
+- 收集
 
 # 5 接口中的默认方法与表态方法
 
