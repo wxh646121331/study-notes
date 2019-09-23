@@ -30,6 +30,7 @@ puml：http://plantuml.com
 | 快捷键           | 说明                     |
 | ---------------- | ------------------------ |
 | Command + Delete | 删除当前行或选定的块的行 |
+| Shift+command+U  | 大小写切换               |
 
 
 
