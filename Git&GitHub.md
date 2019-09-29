@@ -150,6 +150,9 @@
 
 ~~~
 git remote add origin https://github.com/wxh646121331/study-notes.git
+
+//修改远程地址
+git remote set-url origin https://github.com/wxh646121331/study-notes.git
 ~~~
 
 ## 2.2 查看远程库操作
