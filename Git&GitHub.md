@@ -23,7 +23,7 @@
   - 项目级别/仓库级别：仅在当前本地库范围内有效
     - git config user.name wxh_pro
     - git config user.email wxh123_pro.@163.com
-    - 信息保存路径：.git/confit
+    - 信息保存路径：.git/config
   - 系统用户级别：登录当前操作系统的用户范围
     - git config --global user.name wxh-glb
     - git config --globel user.email wxh123_glb@163.com
