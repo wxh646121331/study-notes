@@ -226,8 +226,11 @@ System.out.println(strs2.length);
           }
           return list.stream();
       }
+      ~~~
+~~~
+    
     ~~~
-
+    
 - 排序
 
   - 自然排序：sorted()
@@ -299,3 +302,13 @@ System.out.println(strs2.length);
 # 6 新时间日期API
 
 # 7 其他新特性
+
+# 8 案例总结
+
+## 8.1 利用Stream聚合函数对BigDecimal求和
+
+~~~
+List<BigDecimal> list = new ArrayList<>();
+BigDecimal sumRefund = list.stream().filter(x->null!=x).reduce(BigDecimal.ZERO, BigDecimal::add);
+~~~
+
