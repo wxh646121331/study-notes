@@ -248,5 +248,37 @@ git checkout -b 本地分支名 origin/远程分支名
 
 - 创建SSH地址别名
 
+# 4 ignore
+
+在工作区新建.gitignore文件
+
+- 忽略指定文件/目录
+
+  ~~~
+  # 忽略指定文件
+  HelloWrold.class
+  
+  # 忽略指定文件夹
+  bin/
+  bin/gen/
+  ~~~
+
+- 按通配符忽略
+
+  ~~~
+  # 忽略.class的所有文件
+  *.class
+  
+  # 忽略名称中末尾为ignore的文件夹
+  *ignore/
+  
+  # 忽略名称中间包含ignore的文件夹
+  *ignore*/
+  ~~~
+
+  
+
+
+
 
 
