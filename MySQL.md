@@ -1010,25 +1010,25 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 
 ## 常用命令
 
-| 命令                              | 说明                                                         |
-| --------------------------------- | ------------------------------------------------------------ |
-| mysql -h\$ip -P\$port -u\$user -p | 连接数据库                                                   |
-| show processlist;                 | 查看连接状态，等价于select * from information_schema.processlist; |
-| show databases;                   | 查询所有schema                                               |
-| use database_name;                | 切换scheme                                                   |
-| show tables;                      | 查询当前数据库下所有的表                                     |
-| desc table_name;                  | 查看表结构                                                   |
-| show variables like '%tx%';       | 查看参数配置                                                 |
-| show full columns from tb_nam;    | 查看表结构详细                                               |
-| show create table tb_name;        | 查看建表语句                                                 |
-| select * from mysql.proc limit 1; | 存储过程                                                     |
-| show procedure status;            | 查看存储过程                                                 |
-| show create procedure proc_name;  | 查看存储过程创建代码                                         |
-| show create function func_name;   | 查看函数创建代码                                             |
-| show table status;                | 查看表状态                                                   |
-| kill connection+id                | 断开连接                                                     |
-|                                   |                                                              |
-|                                   |                                                              |
+| 命令                                | 说明                                                         |
+| ----------------------------------- | ------------------------------------------------------------ |
+| mysql -h\$ip -P\$port -u\$user -p   | 连接数据库                                                   |
+| show processlist;                   | 查看连接状态，等价于select * from information_schema.processlist; |
+| show databases;                     | 查询所有schema                                               |
+| use database_name;                  | 切换scheme                                                   |
+| show tables;                        | 查询当前数据库下所有的表                                     |
+| desc table_name;                    | 查看表结构                                                   |
+| show variables like '%tx%';         | 查看参数配置                                                 |
+| show full columns from tb_nam;      | 查看表结构详细                                               |
+| show create table tb_name;          | 查看建表语句                                                 |
+| select * from mysql.proc limit 1;   | 存储过程                                                     |
+| show procedure status;              | 查看存储过程                                                 |
+| show create procedure proc_name;    | 查看存储过程创建代码                                         |
+| show create function func_name;     | 查看函数创建代码                                             |
+| show table status;                  | 查看表状态                                                   |
+| kill connection+id                  | 断开连接                                                     |
+| show status like 'innodb_row_lock%' | 查看行锁状态                                                 |
+|                                     |                                                              |
 
 ## 常用参数
 
