@@ -12,6 +12,10 @@
 
 - 注意：.git目录中存放的是本地库相关的子目录和文件，不要删除，也不要胡乱修改
 
+- git init --bare A
+
+  - 创建一个 git 仓库
+
 ## 1.2 设置签名
 
 - 形式
@@ -23,7 +27,7 @@
   - 项目级别/仓库级别：仅在当前本地库范围内有效
     - git config user.name wxh_pro
     - git config user.email wxh123_pro.@163.com
-    - 信息保存路径：.git/confit
+    - 信息保存路径：.git/config
   - 系统用户级别：登录当前操作系统的用户范围
     - git config --global user.name wxh-glb
     - git config --globel user.email wxh123_glb@163.com
@@ -53,11 +57,11 @@
 
   - 参数说明
 
-    | 参数     | 说明                       |
-    | -------- | -------------------------- |
-    | --soft   | 只修改本地库               |
-    | -\-mixed | 修改本地库和暂存区         |
-    | -\-hard  | 修改本地库、暂存区及工作区 |
+    | 参数     | 说明                           |
+    | -------- | ------------------------------ |
+    | --soft   | 只修改本地库                   |
+    | -\-mixed | 修改本地库和暂存区（默认模式） |
+    | -\-hard  | 修改本地库、暂存区及工作区     |
 
 - git reset HEAD^
 
@@ -109,10 +113,13 @@
 
 - 选项说明：
 
-  | 选项                     | 说明                           |
-  | ------------------------ | ------------------------------ |
-  | git checkout 分支名      | 切换分支                       |
-  | git checkout \-\- 文件名 | 撤销工作区的修改，恢复到本地库 |
+  | 选项                         | 说明                           |
+  | ---------------------------- | ------------------------------ |
+  | git checkout 分支名          | 切换分支                       |
+  | git checkout \-\- 文件名     | 撤销工作区的修改，恢复到本地库 |
+  | git checkout --ours 文件名   |                                |
+  | git checkout --theirs 文件名 |                                |
+  |                              |                                |
 
 - git merge [有新内容的分支]
   
@@ -141,12 +148,24 @@
   3. git add [文件名]
   4. git commit -m "日志信息"(注意：此时commit一定不能带具体文件名)
 
+## 1.9 clean 命令
+
+~~~shell
+git checkout . # 丢弃所有修改或删除，不影响新增或未跟踪的文件。会递归下级目录
+git clean -nxdf # dry-run，先看下即将删除那些文件，再执行下面的危险命令
+git clean -df # 删除所有未跟踪的文件和目录（不包含.gitignore的文件），危险命令
+git clean -xdf # 删除所有未跟踪的文件和目录（同时包含.gitignore的文件），危险命令
+~~~
+
 # 2 远程库操作
 
 ## 2.1 新建别名
 
-~~~
+~~~shell
 git remote add origin https://github.com/wxh646121331/study-notes.git
+
+//修改远程地址
+git remote set-url origin https://github.com/wxh646121331/study-notes.git
 ~~~
 
 ## 2.2 查看远程库操作
@@ -241,6 +260,38 @@ git checkout -b 本地分支名 origin/远程分支名
 - 在GitHub中，进入settings->SSH and GPG keys，粘贴信息
 
 - 创建SSH地址别名
+
+# 4 ignore
+
+在工作区新建.gitignore文件
+
+- 忽略指定文件/目录
+
+  ~~~
+  # 忽略指定文件
+  HelloWrold.class
+  
+  # 忽略指定文件夹
+  bin/
+  bin/gen/
+  ~~~
+
+- 按通配符忽略
+
+  ~~~
+  # 忽略.class的所有文件
+  *.class
+  
+  # 忽略名称中末尾为ignore的文件夹
+  *ignore/
+  
+  # 忽略名称中间包含ignore的文件夹
+  *ignore*/
+  ~~~
+
+  
+
+
 
 
 
