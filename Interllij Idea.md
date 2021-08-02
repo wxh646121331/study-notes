@@ -47,6 +47,7 @@ puml：http://plantuml.com
 | control + option + O        | 去掉无效引用                                                 |
 | Command + Option + L        | 格式化sql                                                    |
 | Command + Option + T        | 对选定代码块进行try...catch                                  |
+| Command + Option + V        | 接收返回值                                                   |
 
 
 

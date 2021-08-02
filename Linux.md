@@ -123,6 +123,60 @@ Linux系统是一个多用户多任务的分时操作系统
 
 - ifconfig
 
+  ~~~
+  eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+          inet 198.28.3.16  netmask 255.255.248.0  broadcast 198.28.7.255
+          inet6 fe80::f816:3eff:fee5:95af  prefixlen 64  scopeid 0x20<link>
+          ether fa:16:3e:e5:95:af  txqueuelen 1000  (Ethernet)
+          RX packets 3439336767  bytes 1123360766355 (1.0 TiB)
+          RX errors 0  dropped 5  overruns 0  frame 0
+          TX packets 1703789605  bytes 1321537852265 (1.2 TiB)
+          TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+  
+  lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+          inet 127.0.0.1  netmask 255.0.0.0
+          inet6 ::1  prefixlen 128  scopeid 0x10<host>
+          loop  txqueuelen 1  (Local Loopback)
+          RX packets 83250684  bytes 62137453272 (57.8 GiB)
+          RX errors 0  dropped 0  overruns 0  frame 0
+          TX packets 83250684  bytes 62137453272 (57.8 GiB)
+          TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+  ~~~
+
+  - eth0:物理网卡
+  - <UP,BROADCAST,RUNNING,MULTICAST>
+    - UP:网卡处于启动的状态
+    - BROADCAST:网卡有广播地址
+    - MULTICAST:网卡可以发送多播包
+  - mtu 1500 ：最大传输单元
+  - inet 198.28.3.16  —— IP地址
+  - netmask 255.255.248.0 —— 子网掩码
+  - broadcast 198.28.7.255 —— 广播地址
+  - inet6 fe80::f816:3eff:fee5:95af —— IPv6地址
+  - scopeid 0x20<link> —— 网卡类型
+  - ether fa:16:3e:e5:95:af —— MAC地址
+  - lo —— 环回接口
+
+- ip addr
+
+  ~~~
+  [root@work001-3 ~]# ip addr
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+         valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host
+         valid_lft forever preferred_lft forever
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+      link/ether fa:16:3e:e5:95:af brd ff:ff:ff:ff:ff:ff
+      inet 198.28.3.16/21 brd 198.28.7.255 scope global eth0
+         valid_lft forever preferred_lft forever
+      inet6 fe80::f816:3eff:fee5:95af/64 scope link
+         valid_lft forever preferred_lft forever
+  ~~~
+
+  
+
 ## 2.5 磁盘分区类
 
 - 分区 

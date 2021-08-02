@@ -289,9 +289,60 @@ git checkout -b 本地分支名 origin/远程分支名
   *ignore*/
   ~~~
 
-  
 
 
+
+# 5 底层命令
+
+- git hash-object [-w] 文件|--stdin
+  - 将内容生产git哈希
+  - 选项
+    - -w 将内容生成的git对象加入到git库
+    - --stdin 控制台内容
+- git cat-file -t|-p 哈希值
+  - 选项
+    - -t 查看对象的类型
+    - -p 查看对象的内容
+
+| 命令                                                    | 说明                                  |
+| ------------------------------------------------------- | ------------------------------------- |
+| git hash-object -w fileurl                              | 将文件加入git仓库                     |
+| git cat-file -t hash                                    | 查看对象类型                          |
+| git cat-file -p hash                                    | 查看对象内容                          |
+| git update-index --add --cacheinfo 100644 hash test.txt | 往暂存区添加记录，让git对象对应文件名 |
+| eche 'comment' \| git commit-tree treehash              | 生成一个提交对象到.git/objects        |
+| git ls-files -s                                         | 查看暂存区                            |
+
+
+
+# 6 高级命令
+
+| 命令                        | 说明               |
+| --------------------------- | ------------------ |
+| git diff                    | 查看未暂存的内容   |
+| git diff --cached\|--staged | 查看已暂存的内容   |
+| git commit -m 注释信息      | 提交暂存区的内容   |
+| git commit -a               | 跳过暂存区提交内容 |
+| git config --list           | 查看配置信息       |
+| git mv oldfile newfile      | 重命名文件         |
+|                             |                    |
+|                             |                    |
+|                             |                    |
+
+
+
+## 分支
+
+| 命令                                       | 说明                               |
+| ------------------------------------------ | ---------------------------------- |
+| git log --oneline --decorate --graph --all | 查看整个项目的分支图               |
+| git branch                                 | 查看分支列表                       |
+| git branch -v                              | 查看分支指向的最新的提交           |
+| git branch name                            | 在当前提交对象上创建新的分支       |
+| git branch name commithash                 | 在指定的提交对象上创建新的分支     |
+| git checkout name                          | 切换分支                           |
+| git branch -d name                         | 删除空的分支，删除已经被合并的分支 |
+| git branch -D name                         | 强制删除分支                       |
 
 
 
