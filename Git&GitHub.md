@@ -344,5 +344,5 @@ git checkout -b 本地分支名 origin/远程分支名
 | git branch -d name                         | 删除空的分支，删除已经被合并的分支 |
 | git branch -D name                         | 强制删除分支                       |
 
-
+git config --list | grep alias
 
