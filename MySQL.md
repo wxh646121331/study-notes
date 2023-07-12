@@ -1028,7 +1028,8 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 | show table status;                  | 查看表状态                                                   |
 | kill connection+id                  | 断开连接                                                     |
 | show status like 'innodb_row_lock%' | 查看行锁状态                                                 |
-|                                     |                                                              |
+| show index from tb_name             | 查询一个表的索引                                             |
+| show engine innodb status \G;       | 查询innodb引擎状态                                           |
 
 ## 常用参数
 
@@ -1049,7 +1050,7 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 | innodb_file_per_table            | 控制表数据的存放，ON表示每个InnoDB表数据存储在一个以.idb为后缀的文件中，OFF表示表数据放在系统共享表空间中，也就是跟数据字典放在一起，从MySQL 5.6.6 版本开始，默认值是ON |
 | binlog_checksum                  | 验证binlog内容的正确性                                       |
 | sort_buffer_size                 | sort_buffer的大小，如果要排序的数据量小于sort_buffer_size，排序就在内存中完成，如果内存放不下，则不得不利用磁盘临时文件辅助排序 |
-| optimizer_trace                  |                                                              |
+| optimizer_trace                  | 优化器链路配置                                               |
 | internal_tmp_disk_storage_engine | 设置临时表引擎                                               |
 | max_length_for_sort_data         | 排序数据单行最大长度                                         |
 | tmp_table_size                   | 内存临时表的大小限制                                         |
@@ -1058,8 +1059,8 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 | binlog_cache_size                | 单个线程的binlog_cache所占内存的大小                         |
 | sync_binlog                      | 控制binlog的write和fsync写入时机，0表示每次提交事务都只write，不fsync；1表示每次提交事务的时候都会执行fsync；N>1表示每次提交事务都write，但累计提交N个事务后再fsync |
 | innodb_flush_log_at_trx_commit   | redo log的写入策略：0每次事务提交的时候都只把redo log留在redo log buffer中；1表示每次提交事务的时候都将redo log持久化到磁盘；2表示每次提交事务的时候都只把redo log写到page cache |
-|                                  |                                                              |
-|                                  |                                                              |
+| end_markers_in_json              | json格式显示                                                 |
+| default_storage_engine           | 默认存储引擎                                                 |
 |                                  |                                                              |
 |                                  |                                                              |
 |                                  |                                                              |
@@ -1111,6 +1112,26 @@ alter table trade_detail modify tradeid varchar(32) CHARACTER SET utf8mb4 defaul
 
 
 # explain相关说明
+
+- type
+
+  - 查询类型：all,range...
+  
+- possible_key
+
+  - 可能使用的索引
+
+- key
+
+  - 最终选择的索引
+
+- ken_len 
+
+  - 使用索引的长度
+
+- rows: 扫描行数
+
+- filtered: 有效率
 
 - extra
 
